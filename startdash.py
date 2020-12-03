@@ -101,6 +101,7 @@ if __name__=='__main__':
 
     enable_gpu = True
     max_molecule = 10000
+    logger.info('Using {} molecules with GPU status {}'.format(max_molecule, enable_gpu))
     pca_components = 64 # Number of PCA components or False to not use PCA
 
     # ensure we have data
