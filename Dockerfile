@@ -1,7 +1,11 @@
 # Copyright 2020 NVIDIA Corporation
 # SPDX-License-Identifier: Apache-2.0
 FROM nvidia/cuda:11.0-base
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget git
+ARG CODE_BASE=/opt/nvidia
+ARG PACKAGE_PATH=${CODE_BASE}/cheminformatics/
+ARG CONDA_ENV=cuchem
+
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget git && rm -rf /var/lib/apt/lists/*
 
 SHELL ["/bin/bash", "-c"]
 RUN  wget --quiet -O /tmp/miniconda.sh \
@@ -14,12 +18,12 @@ ENV PATH /opt/conda/bin:$PATH
 # Copy conda env spec.
 COPY setup/cuchem_rapids_0.17.yml /tmp
 
-RUN conda env create --name cuchem -f /tmp/cuchem_rapids_0.17.yml
-ENV PATH /opt/conda/envs/cuchem/bin:$PATH
-RUN conda clean -afy
-RUN rm /tmp/cuchem_rapids_0.17.yml
+RUN conda env create --name ${CONDA_ENV} -f /tmp/cuchem_rapids_0.17.yml \
+    && rm /tmp/cuchem_rapids_0.17.yml \
+    && conda clean -ay
+ENV PATH /opt/conda/envs/${CONDA_ENV}/bin:$PATH
 
-RUN source activate cuchem && python3 -m ipykernel install --user --name=cuchem
+RUN conda run -n ${CONDA_ENV} python3 -m ipykernel install --user --name=${CONDA_ENV}
 RUN echo "source activate cuchem" > /etc/bash.bashrc
 
 RUN mkdir -p /opt/nvidia/ \
@@ -29,4 +33,4 @@ RUN mkdir -p /opt/nvidia/ \
 
 ENV UCX_LOG_LEVEL error
 
-CMD /opt/nvidia/cheminfomatics/launch.sh dash
+CMD ${PACKAGE_PATH}/launch.sh dash
